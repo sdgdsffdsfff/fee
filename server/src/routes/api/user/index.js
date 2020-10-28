@@ -101,7 +101,25 @@ let searchUC = RouterConfigBuilder.routerConfigBuilder('/api/user/search_uc', Ro
   }
   const sign = UC.getSign(queryData, headers, key)
   headers['sign'] = sign
-  let resultUC = await http.get(api + '/ehr/user/searchByKeyword', { params: queryData, headers })
+  // 此处需要用户实现，可对接所在公司内部的uc系统
+  let resultUC = await http.get(api + '/ehr/user/searchByKeyword', { params: queryData, headers }).catch(e => ({
+    data: {
+      data: {
+        list: [
+          {
+            account: "dev@qq.com",
+            avatar: "",
+            email: "dev@qq.com",
+            id: 12345678901,
+            mobile: "12345678901",
+            name: "测试用户",
+            nickname: "测试用户",
+            ucid: 12345678901
+          }
+        ]
+      }
+    }
+  }))
   let resultUCList = _.get(resultUC, ['data', 'data', 'list'], [])
   resultUCList.forEach(item => {
     item['ucid'] = item['id']
@@ -126,7 +144,7 @@ const register = RouterConfigBuilder.routerConfigBuilder('/api/user/register', R
     role
   }
   // 判断此账号是否存在
-  let rawUser = MUser.getByAccount(account)
+  let rawUser = await MUser.getByAccount(account)
   if (_.isEmpty(rawUser) || rawUser.is_delete === 1) {
     const isSuccess = await MUser.register(account, userInfo)
     if (isSuccess) {
